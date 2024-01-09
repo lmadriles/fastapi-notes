@@ -1,37 +1,42 @@
-from fastapi import FastAPI 
-from fastapi.params import Body
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Optional
 
- # primeiros passos. 
 app = FastAPI() 
  
+# Define 
+class Post(BaseModel): # classe herda BaseModel
+    title: str
+    content: str
+    user: int
+    published: bool = True # field opcional com valor default
+    likes: Optional[int] = None # field opcional mas não queremos default atribuido.
 
-# a seguir temos o path operation ou route: 
+
 @app.get("/") # request do método get de HTTP
 def root(): 
     return {"message": "Hello World"} 
-
-# função: é a definição de função normal como no python 
-    # antes de def podemos colocar a keyword async: necessária para testes assíncronos. 
-    # o que a função retornar é o que o usuário receberá. 
-# decorator: transforma a função em uma path operation. Se torna algo utilizável para o FastAPI 
-    # app é a instancia do FastAPI que criamos acima 
-    # get é um method de request de HTTP (https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods) 
-    # '/' é pra fazer parte do path do navegador.  
-        # Sabemos que barra no fim do endereço nao altera nada; Ainda é o root path... 
-        # mas podemos colocar o que quizermos ali pra compor o http ex: ("/tutorial")
 
 @app.get("/posts")
 def get_posts():
     return {"data": "This is your post"}
 
-# método GET serve para recuperar informações
-    # obs.: ORDEM IMPORTA: se colocamos os mesmo path em path operation para duas funções diferentes,
-    #  o algoritmo vai percorrer o código e usar o primeiro match
-    #  o mais acima no código.
-
-
 @app.post("/createposts")
-def create_posts(variable_name: dict = Body(...)):
-    print(variable_name)
-    return {"message": f"title {variable_name['title']} content {variable_name['content']}"}
+def create_posts(new_post: Post): # recebe a classe e valida os dados (quais e seus formatos)
+    print(new_post) # objeto de classe pydantic model
+    print(new_post.likes) # valor de likes
+    print(new_post.dict()) # objeto convertido pra dict
+    
+    return {"message": f"title: {new_post.title}"} # new_post['title'] não funciona aqui
+
+    # se usuário fornece dado que não está na classe: não entra na função;
+    # não fornece dado que está na classe e não é usado na função: nada acontece
+    # não fornece dado que está na classe mas é usado na função:
+        # erro: 422 Unprocessable Entity; msg: "field required";
+    # usuário fornece objeto com tipo diferente do especificado: 
+        # se for inteiro pra string, o algo converte
+        # se for outro tipo: 422 Unprocessable Entity; 
+            # msg: "value is not a valid integer"; 
+            # type: "type_error_integer"; 
+
 
